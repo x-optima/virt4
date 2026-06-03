@@ -1,6 +1,4 @@
-#compose.yaml
-
-version: '3.8'
+# compose.yaml
 
 include:
   - proxy.yaml
@@ -10,39 +8,40 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.python
-    
-    restart: unless-stopped
+
+    # Всегда перезапускать при ошибке
+    restart: on-failure
+
+    # Та же сеть backend, что и в proxy.yaml
     networks:
       backend:
         ipv4_address: 172.20.0.5
-    
-    ports:
-      - "8090:5000"
-    
+
+
+    # Переменные из main.py:
     environment:
-      - MYSQL_HOST=db
-      - MYSQL_PORT=3306
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-    
+      DB_HOST: db
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
+
     depends_on:
       - db
 
   db:
     image: mysql:8
     restart: on-failure
+
     networks:
       backend:
         ipv4_address: 172.20.0.10
-    
+
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-    
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
     volumes:
       - db_data:/var/lib/mysql
 
