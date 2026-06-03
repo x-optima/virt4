@@ -1,0 +1,73 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker файлы (не нужны внутри образа)
+Dockerfile
+Dockerfile.python
+.dockerignore
+compose.yaml
+proxy.yaml
+
+# Папки с конфигурациями прокси
+haproxy/
+nginx/
+
+# Screenshots и документация
+screenshots/
+*.pdf
+READMEDZ.md
+README.md
+LICENSE
+schema.pdf
+
+# Скрипты
+script.sh
+
+# Python кэш и артефакты
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+.env
+.eggs/
+*.egg-info/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.pyc
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Тесты
+tests/
+test_*.py
+*_test.py
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Логи и временные файлы
+*.log
+*.tmp
+tmp/
+temp/
