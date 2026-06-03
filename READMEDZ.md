@@ -75,6 +75,18 @@ See 'snap info docker' for additional versions.
 4. Просканируйте образ на уязвимости.
 5. В качестве ответа приложите отчет сканирования.
 
+## Ответ  
+<span style="color:black">
+
+Скриншоты.  
+
+![Задание 2. Скриншот 1](screenshots/scr2_1.png)  
+![Задание 2. Скриншот 2](screenshots/scr2_2.png)  
+![Задание 2. Скриншот 3](screenshots/scr2_3.png)  
+![Задание 2. Скриншот 4](screenshots/scr2_4.png)  
+
+
+---
 ## Задача 3
 1. Изучите файл "proxy.yaml"
 2. Создайте в репозитории с проектом файл ```compose.yaml```. С помощью директивы "include" подключите к нему файл "proxy.yaml".
