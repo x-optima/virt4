@@ -15,7 +15,7 @@
     backup_script: /opt/backup/mysql-backup.sh   #Путь до bash-скрипта резервного копирования на сервере    
     backup_env_file: /opt/backup/.backup.env     #Путь до env-файла с параметрами подключения к БД    
     docker_network_name: virt4_backend           #Имя Docker-сети, в которой доступен контейнер MySQL
-    mysql_host: virt4-db-1                       #Имя MySQL-хоста внутри Docker-сети. Имя контейнера БД
+    mysql_host: db                               #Имя MySQL-хоста внутри Docker-сети. Имя контейнера БД
     mysql_database: virtd                        #Имя БД, которую будем резервировать
     mysql_user: app                              #Пользователь MySQL, от имени которого выполняется дамп
     mysql_password: "{{ vault_mysql_password }}" #Пароль берем из ansible-vault, чтобы не хранить его открытым текстом в Git

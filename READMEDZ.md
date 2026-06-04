@@ -249,7 +249,12 @@ See 'snap info docker' for additional versions.
 3) Добавим пароль пользователя в vault.yml . ansible-vault edit group_vars/all/vault.yml "vault_mysql_password: "QwErTy1234""  
 4) Запустим плейбук. Плейбук не запускается из-за того, что используется старый клиент mysqldump внутри образа schnitzler/mysqldump, а сервер БД развёрнут как MySQL 8.4 (через образ mysql:8), где по умолчанию включён плагин аутентификации caching_sha2_password, который этот клиент не поддерживает. 
 5) Меняем в compose.yaml в секции db версию образа на 8.0, удаляем работающие контейнеры и пересобираем начиная с playbook1.yml.  
-6) 
+6) Не помогает.
+7) Переводим пользователя app с caching_sha2_password на mysql_native_password, для совместимости со старым MariaDB‑клиентом внутри schnitzler/mysqldump.
+8) Запускам playbook_backup.yml. Ok.  
+9) Плейбук отработал, скрипт бэкапа успешно сделал дамп, cron настроен, и в /opt/backup лежит рабочий .sql.gz.
+10) Cкрипт работает по крону, каждую минуту создаёт .sql.gz.  
+11) Удаляем инфрастурктуру terraform destroy.   
 
 Скриншоты.  
  
@@ -258,18 +263,21 @@ See 'snap info docker' for additional versions.
 ![Задание 5. Скриншот 3](screenshots/scr5_3.png)
 ![Задание 5. Скриншот 4](screenshots/scr5_4.png)  
 ![Задание 5. Скриншот 5](screenshots/scr5_5.png)  
-![Задание 5. Скриншот 6](screenshots/scr5_6png)
-![Задание 5. Скриншот 7](screenshots/scr5_7.png)  
-![Задание 5. Скриншот 8](screenshots/scr5_8.png)  
-![Задание 5. Скриншот 9](screenshots/scr5_9.png)
-
-
 
 
 
 ## Задача 6
 Скачайте docker образ ```hashicorp/terraform:latest``` и скопируйте бинарный файл ```/bin/terraform``` на свою локальную машину, используя dive и docker save.
 Предоставьте скриншоты  действий .
+
+1) Скачаем образ docker pull hashicorp/terraform:latest  
+2) Проверим что образ у нас docker images hashicorp/terraform  
+3) Установим dive командой sudo snap install dive и подключим к докеру.  
+4) Запустим dive длф образа terraform командой dive hashicorp/terraform:latest
+5) Используем команду docker save дл сохранения образа в файл. docker save hashicorp/terraform:latest -o terraform-image.tar
+6) Убеждаемся, что файл сохранён ls -lh terraform-image.tar.   
+
+
 
 <span style="color:red"> 
 
@@ -280,7 +288,9 @@ See 'snap info docker' for additional versions.
 
 ![Задание 6. Скриншот 1](screenshots/scr6_1.png)  
 ![Задание 6. Скриншот 2](screenshots/scr6_2.png)  
-![Задание 6. Скриншот 3](screenshots/scr6_3.png)  
+![Задание 6. Скриншот 3](screenshots/scr6_3.png) 
+![Задание 6. Скриншот 4](screenshots/scr6_4.png)  
+![Задание 6. Скриншот 5](screenshots/scr6_5.png)  
 
 
 ## Задача 6.1
@@ -292,6 +302,12 @@ See 'snap info docker' for additional versions.
 
 ## Ответ  
 <span style="color:black">
+
+1) Запускаем контейнер из образа docker run -d --name terraform-tmp hashicorp/terraform:latest sleep infinity .  
+2) Проверяем статус контейнера. Он остановлен, но docker cp умеет работать и с остановленным контейнером.  
+3) Применяем команду docker cp terraform-tmp:/bin/terraform ./terraform.  
+4) Убеждаемся, что файл сущесьвуеь ls -l terraform.  
+5) Удаляем все скопированные файлы из каталога задания и пушим проект.   
 
 Скриншоты.  
 
