@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Bash-скрипт резервного копирования MySQL.
+# Создает SQL-дамп через временный контейнер schnitzler/mysqldump
+# и сохраняет его в /opt/backup в сжатом виде (.sql.gz).
+
+set -euo pipefail                     #-e        : завершить скрипт при любой ошибке
+                                      #-u        : завершить, если используется неинициализированная переменная
+                                      #-o pipefail : считать ошибкой сбой любой команды в пайпе
+BACKUP_DIR="{{ backup_dir }}"         #Каталог, где будут лежать резервные копии
+ENV_FILE="{{ backup_env_file }}"      #Файл с переменными окружения для подключения к MySQL
+NETWORK="{{ docker_network_name }}"   #Docker-сеть, в которой доступен контейнер БД
+IMAGE="schnitzler/mysqldump"          #Docker-образ для выполнения mysqldump
+TIMESTAMP="$(date +%F_%H-%M-%S)"      #Метка времени для уникального имени backup-файла
+
+
+#Проверяем, существует ли env-файл
+if [[ ! -f "$ENV_FILE" ]]; then
+  echo "Env file not found: $ENV_FILE" >&2
+  exit 1
+fi
+
+#Загружаем переменные окружения из env-файла
+set -a
+source "$ENV_FILE"
+set +a
+
+#Создаем каталог backup, если его нет
+mkdir -p "$BACKUP_DIR"
+
+OUT_FILE="${BACKUP_DIR}/mysql_${MYSQL_DATABASE}_${TIMESTAMP}.sql"
+#Имя итогового SQL-дампа до сжатия
+
+#Запускаем временный контейнер из образа schnitzler/mysqldump
+docker run --rm \
+  --entrypoint "" \
+  --network "$NETWORK" \
+  "$IMAGE" \
+  mysqldump $MYSQLDUMP_OPTS \
+    -h "$MYSQL_HOST" \
+    -u "$MYSQL_USER" \
+    -p"$MYSQL_PASSWORD" \
+    "$MYSQL_DATABASE" > "$OUT_FILE"
+
+#Сжимаем SQL-дамп в gzip, чтобы он занимал меньше места
+gzip -f "$OUT_FILE"
+
+#Удаляем backup-файлы старше 7 дней, чтобы каталог /opt/backup не рос бесконечно
+find "$BACKUP_DIR" -type f -name 'mysql_*.sql.gz' -mtime +7 -delete
+
+#Выводим сообщение об успешном создании backup
+echo "Backup created: ${OUT_FILE}.gz"

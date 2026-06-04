@@ -186,12 +186,46 @@ See 'snap info docker' for additional versions.
 ## Ответ  
 <span style="color:black">
 
+1) Будем разворачивать ВМ и устанавливать docker через terraform+ansible.Создаём каталог ./terraform и файлы в нём  
+
+Файлы.    
+<a href="./terraform/cloud-init.yml.tpl" target="_blank"> cloud-init.yml.tpl </a>  
+<a href="./terraform/playbook1.yml" target="_blank"> playbook1.yml </a>  
+<a href="./terraform/group_vars/all/vault.yml" target="_blank"> vault.yml </a>  
+<a href="./terraform/main.tf" target="_blank"> main.tf </a>  
+<a href="./terraform/network.tf" target="_blank"> network.tf </a>  
+<a href="./terraform/providers.tf" target="_blank"> providers.tf </a>  
+<a href="./terraform/variables.tf" target="_blank"> variables.tf </a>   
+<a href="./terraform/deploy.sh" target="_blank"> deploy.sh </a>   (развернёт наш проект из репозитория на ВМ)  
+
+ 
+ 
+2) Разворачиваем инфраструктуру. Terraform успешно отработал и сервер создалася в облаке.  
+3) Проверим доступ к серверу через ssh. Ок.
+4) Устанавлиаем docker через ansible playbook. Ok.  
+5) Скрипт развернул контейнеры в ВМ и мы их видим.  
+6) Проверяем с локальной машины работу проекта curl http://51.250.93.133:8090   Ок.
+7) Создаём remote ssh context командой docker context create yc-remote --docker "host=ssh://yc-user@51.250.93.133"  
+8) Посмотрим спиоск контекстов docker context ls .  
+9) Активируем наш контекст docker context use yc-remote  
+10) Выведем список контейнеров docker ps -a и убедимся по идентифкаторам что контейнерры оторазились те же что и на ВМ.  
+11) Зайдём по на сервер по ssh, подключимся к контейнеру БД и запросим содержимое таблицы requests командой docker exec -it virt4-db-1 mysql -u app -pQwErTy1234 virtd -e "SELECT * FROM requests ORDER BY id DESC LIMIT 10;".    
+12) Ссылка на форк <a href="https://github.com/x-optima/virt4.git"> repo_url </a>   
+
+
+
+
 Скриншоты.  
 
 ![Задание 4. Скриншот 1](screenshots/scr4_1.png)  
 ![Задание 4. Скриншот 2](screenshots/scr4_2.png)  
 ![Задание 4. Скриншот 3](screenshots/scr4_3.png)  
-
+![Задание 4. Скриншот 4](screenshots/scr4_4.png)  
+![Задание 4. Скриншот 5](screenshots/scr4_5.png)  
+![Задание 4. Скриншот 6](screenshots/scr4_6.png)  
+![Задание 4. Скриншот 7](screenshots/scr4_7.png)  
+![Задание 4. Скриншот 8](screenshots/scr4_8.png)  
+![Задание 4. Скриншот 9](screenshots/scr4_9.png)  
 
 
 ## Задача 5 (*)
@@ -205,11 +239,32 @@ See 'snap info docker' for additional versions.
 ## Ответ  
 <span style="color:black">
 
-Скриншоты.  
+1) Будем делать через ansible playbook.Для этого создадим файлы  
 
+<a href="./terraform/playbook_backup.yml" target="_blank"> playbook_backup.yml </a>
+<a href="./terraform/mysql-backup.sh.j2" target="_blank"> mysql-backup.sh.j2 </a>
+<a href="./terraform/backup.env.j2" target="_blank"> backup.env.j2 </a>
+
+2) Опишем плейбук и шаблоны.
+3) Добавим пароль пользователя в vault.yml . ansible-vault edit group_vars/all/vault.yml "vault_mysql_password: "QwErTy1234""  
+4) Запустим плейбук. Плейбук не запускается из-за того, что используется старый клиент mysqldump внутри образа schnitzler/mysqldump, а сервер БД развёрнут как MySQL 8.4 (через образ mysql:8), где по умолчанию включён плагин аутентификации caching_sha2_password, который этот клиент не поддерживает. 
+5) Меняем в compose.yaml в секции db версию образа на 8.0, удаляем работающие контейнеры и пересобираем начиная с playbook1.yml.  
+6) 
+
+Скриншоты.  
+ 
 ![Задание 5. Скриншот 1](screenshots/scr5_1.png)  
 ![Задание 5. Скриншот 2](screenshots/scr5_2.png)  
-![Задание 5. Скриншот 3](screenshots/scr5_3.png)  
+![Задание 5. Скриншот 3](screenshots/scr5_3.png)
+![Задание 5. Скриншот 4](screenshots/scr5_4.png)  
+![Задание 5. Скриншот 5](screenshots/scr5_5.png)  
+![Задание 5. Скриншот 6](screenshots/scr5_6png)
+![Задание 5. Скриншот 7](screenshots/scr5_7.png)  
+![Задание 5. Скриншот 8](screenshots/scr5_8.png)  
+![Задание 5. Скриншот 9](screenshots/scr5_9.png)
+
+
+
 
 
 ## Задача 6

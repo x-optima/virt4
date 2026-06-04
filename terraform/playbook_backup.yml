@@ -1,0 +1,74 @@
+#playbook_backup.yml
+---
+#создает каталог /opt/backup на сервере
+#загружает env-файл с параметрами подключения к MySQL
+#загружает bash-скрипт резервного копирования
+#выполняет тестовый ручной запуск скрипта
+#настраивает cron-задачу на запуск раз в минуту
+
+- name: Deploy MySQL backup script and cron
+  hosts: servers                                 #Группа хостов из inventory (hosts.ini)
+  become: true                                   #Все задачи выполняются с sudo/root-привилегиями
+  gather_facts: true                             #Собирать системные факты Ansible
+  vars:                                        
+    backup_dir: /opt/backup                      #Каталог c резервными копиями БД
+    backup_script: /opt/backup/mysql-backup.sh   #Путь до bash-скрипта резервного копирования на сервере    
+    backup_env_file: /opt/backup/.backup.env     #Путь до env-файла с параметрами подключения к БД    
+    docker_network_name: virt4_backend           #Имя Docker-сети, в которой доступен контейнер MySQL
+    mysql_host: virt4-db-1                       #Имя MySQL-хоста внутри Docker-сети. Имя контейнера БД
+    mysql_database: virtd                        #Имя БД, которую будем резервировать
+    mysql_user: app                              #Пользователь MySQL, от имени которого выполняется дамп
+    mysql_password: "{{ vault_mysql_password }}" #Пароль берем из ansible-vault, чтобы не хранить его открытым текстом в Git
+
+    # Дополнительные параметры mysqldump:
+    # --single-transaction  - консистентный дамп без блокировок для InnoDB
+    # --quick               - выгрузка строк по одной, чтобы не держать все в памяти
+    # --lock-tables=false   - не блокировать таблицы
+    mysqldump_opts: "--single-transaction --quick --lock-tables=false"
+
+  tasks:
+    - name: Ensure backup directory exists      #Создаем каталог /opt/backup, если его нет
+      ansible.builtin.file:
+        path: "{{ backup_dir }}"                #Путь к каталогу
+        state: directory                        #Убеждаемся, что это директория
+        owner: root                             #Владельцем каталога будет root
+        group: root                             #Группа каталога root
+        mode: "0755"                            #Права доступа
+
+    - name: Deploy backup env file              #Загружаем env-файл на сервер из шаблона backup.env.j2
+      ansible.builtin.template:
+        src: backup.env.j2                      #Локальный Jinja2-шаблон в каталоге playbook
+        dest: "{{ backup_env_file }}"           #Куда положить env-файл на сервере
+        owner: root                             #Владельцем файла будет root
+        group: root                             #Группа файла root
+        mode: "0600"                            #Только root может читать/писать файл. Нет лишнего доступа к логину/паролю БД
+
+    - name: Deploy backup script                #Загружаем bash-скрипт резервного копирования из шаблона mysql-backup.sh.j2
+      ansible.builtin.template:
+        src: mysql-backup.sh.j2                 #Локальный Jinja2-шаблон со скриптом
+        dest: "{{ backup_script }}"             #Куда положить скрипт на сервере
+        owner: root                             #Владельцем будет root
+        group: root                             #Группа файла root
+        mode: "0755"                            #Скрипт должен быть исполняемым
+
+    - name: Test backup script manually               #Выполняем скрипт однократно ,чтобы убедиться, что backup реально создается
+      ansible.builtin.command: "{{ backup_script }}"
+      register: backup_run                           #Сохраняем stdout/stderr в переменную backup_run
+    - name: Show manual backup result                #Выводим результат ручного запуска скрипта в лог Ansible
+      ansible.builtin.debug:
+        var: backup_run.stdout_lines
+
+    - name: Configure cron job every minute          #Создаем cron-задачу для root на запуск backup-скрипта раз в минуту
+      ansible.builtin.cron:
+        name: "mysql backup every minute"            #Уникальное имя cron-задачи в crontab
+        user: root                                   #Cron создается в crontab пользователя root
+        minute: "*"                                  #Запуск каждую минуту
+        job: "{{ backup_script }} >> {{ backup_dir }}/backup.log 2>&1" #Запускаем backup-скрипт, добавляем stdout/stderr в лог-файл /opt/backup/backup.log
+
+    - name: Show backup directory contents                #Показываем содержимое каталога с резервными копиями
+      ansible.builtin.command: ls -lh "{{ backup_dir }}"
+      register: backup_ls                                 #Сохраняем вывод команды в переменную backup_ls
+
+    - name: Print backup directory contents               #Печатаем список файлов из /opt/backup в вывод playbook
+      ansible.builtin.debug:
+        var: backup_ls.stdout_lines

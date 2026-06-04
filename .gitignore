@@ -51,3 +51,41 @@ test_*.py
 .travis.yml
 .jenkinsfile
 
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+# Sensitive tfvars
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+!secret.auto.tfvars.example
+
+# Generated inventory
+hosts.ini
+
+# Ansible / Vault
+vault-pass.txt
+*.vault
+group_vars/all/vault.yml
+group_vars/all/vault.yaml
+
+# SSH / keys / cloud creds
+*.pem
+*.key
+*.pub
+authorized_key.json
+*.json
+
+# Env files
+.env
+.env.*
+!.env.example
